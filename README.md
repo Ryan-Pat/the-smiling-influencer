@@ -6,7 +6,7 @@ Een hybride, interactieve ervaring voor jongeren (12–25 jaar) over smartphoneg
 
 ## De ervaring
 
-1. **The Smiling Influencer** (ongeveer 5 minuten, gescript)
+1. **The Smiling Influencer** (ongeveer 3 minuten, gescript)
    Je bent een beginnende influencer met 100.000 volgers en je doel is 1.000.000. De frontcamera herkent of je glimlacht. Als je glimlacht krijg je volgers en positieve reacties, als je stopt verlies je ze. De opdrachten worden steeds langer en uiteindelijk is een glimlach nooit meer goed genoeg: je verliest al je volgers.
 2. **Het omslagpunt**
    Een zwart scherm, vijf reflectievragen (die je ook mag overslaan) en de overgang naar deel 2.

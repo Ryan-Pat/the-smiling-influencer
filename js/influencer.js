@@ -1,7 +1,7 @@
 // Deel 1 – The Smiling Influencer
 // Een gescripte livestream van ongeveer vijf minuten die je niet kunt winnen.
 
-import { openCamera, cameraErrorText } from './camera.js?v=5';
+import { openCamera, cameraErrorText } from './camera.js?v=7';
 
 const $ = (id) => document.getElementById(id);
 const rand =(a, b) => a + Math.random() * (b - a);
@@ -18,19 +18,20 @@ const WEIGHTS = 'vendor/face-api/models/';
 
 const GOAL = 1000000;
 const START = 100000;
-const GAP = 3.5;        // pauze tussen opdrachten (s)
-const P3_MIN = 35;      // minimale duur van fase 3 (s)
-const P3_END = 268;     // fase 3 eindigt rond dit moment (s)
-const COLLAPSE = 12;    // duur van de laatste val naar 0 (s)
-const P3_FILL = 6.5;    // zo lang glimlachen voordat het "niet goed genoeg" is
+// Het hele script duurt ongeveer 3 minuten.
+const GAP = 3;          // pauze tussen opdrachten (s)
+const P3_MIN = 25;      // minimale duur van fase 3 (s)
+const P3_END = 158;     // fase 3 eindigt rond dit moment (s)
+const COLLAPSE = 10;    // duur van de laatste val naar 0 (s)
+const P3_FILL = 6;      // zo lang glimlachen voordat het "niet goed genoeg" is
 
 const TASKS = [
-  { p: 1, text: 'Glimlach 10 seconden naar de camera.', need: 10, max: 25, bonus: 12000 },
-  { p: 1, text: 'Glimlach 20 seconden naar de camera.', need: 20, max: 35, bonus: 18000 },
-  { p: 1, text: 'Houd je glimlach 30 seconden vast.', need: 30, max: 45, bonus: 25000 },
-  { p: 2, text: 'Blijf 45 seconden glimlachen.', need: 45, max: 60, bonus: 9000, drain: true },
-  { p: 2, text: 'Houd je glimlach 60 seconden vast.', need: 60, max: 75, bonus: 6000, drain: true },
-  { p: 2, text: 'Je volgers willen dat je blijft lachen!', hold: 25 },
+  { p: 1, text: 'Glimlach 5 seconden naar de camera.', need: 5, max: 15, bonus: 15000 },
+  { p: 1, text: 'Glimlach 10 seconden naar de camera.', need: 10, max: 20, bonus: 20000 },
+  { p: 1, text: 'Houd je glimlach 15 seconden vast.', need: 15, max: 28, bonus: 25000 },
+  { p: 2, text: 'Blijf 20 seconden glimlachen.', need: 20, max: 32, bonus: 9000, drain: true },
+  { p: 2, text: 'Houd je glimlach 30 seconden vast.', need: 30, max: 42, bonus: 6000, drain: true },
+  { p: 2, text: 'Je volgers willen dat je blijft lachen!', hold: 15 },
 ];
 
 const DEMANDS = [
@@ -334,10 +335,12 @@ function step(dt, sm) {
       S.col.t += dt;
       const v = Math.min(1, S.col.t / COLLAPSE);
       add(S.col.F0 * (1 - v * v) - S.followers);
-      if (v >= 1) endStream();
+      if (v >= 1 || S.followers < 1) endStream();
       break;
     }
   }
+  // Alle volgers kwijt (bijvoorbeeld door helemaal niet te lachen): dan stopt de stream meteen.
+  if (S && S.followers < 1 && S.step !== 'end' && S.step !== 'pre') endStream();
 }
 
 function nextTask() {
@@ -436,6 +439,8 @@ function reject() {
 }
 
 function startCollapse() {
+  // Zijn er (bijna) geen volgers meer over, dan valt er ook niets meer te verliezen.
+  if (S.followers < 1000) { endStream(); return; }
   S.step = 'collapse';
   S.col = { t: 0, F0: S.followers };
   setTask('Er gaat iets mis…', 'Je verliest al je volgers.', 'fail', '📉');
@@ -464,7 +469,12 @@ function endStream() {
 
 function later(fn, ms) { S.timers.push(setTimeout(fn, ms)); }
 
-function vibrate(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+function vibrate(p) {
+  try {
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+    if (navigator.vibrate) navigator.vibrate(p);
+  } catch (e) {}
+}
 
 function interval() {
   if (S.step === 'collapse') return 0.32;
@@ -495,6 +505,8 @@ function fx(rdt, sm) {
 }
 
 function postComment(sm) {
+  // Wie geen volgers meer heeft, kan ook niemand meer kwijtraken.
+  if (S.followers < 1) return;
   if (S.step === 'collapse') {
     if (Math.random() < 0.6) return sys(`${pick(USERS)} volgt je niet meer`);
     return comment(pick(C.p3), 'neg');
@@ -509,6 +521,7 @@ function postComment(sm) {
 }
 
 function comment(text, kind, user = pick(USERS)) {
+  if (!S || S.step === 'end') return;
   const list = $('comments');
   const el = document.createElement('div');
   el.className = 'cmt ' + kind;
@@ -527,6 +540,7 @@ function comment(text, kind, user = pick(USERS)) {
 }
 
 function sys(text) {
+  if (!S || S.step === 'end') return;
   const list = $('comments');
   const el = document.createElement('div');
   el.className = 'cmt sys';

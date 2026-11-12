@@ -1,8 +1,8 @@
 // The Smiling Influencer – schermen en de overgang tussen deel 1 en deel 2.
 // Verhoog ?v= bij elke nieuwe versie (overal hetzelfde nummer), zodat browsers geen oude bestanden mengen.
-import { startInfluencer, SPEED } from './influencer.js?v=5';
-import { showForest, setReplayHandler } from './forest.js?v=5';
-import { state, save } from './store.js?v=5';
+import { startInfluencer, SPEED } from './influencer.js?v=7';
+import { showForest, setReplayHandler } from './forest.js?v=7';
+import { state, save } from './store.js?v=7';
 
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, SPEED > 1 ? ms / 3 : ms));
@@ -148,6 +148,63 @@ async function bridge() {
   if (!(await go(1400))) return; $('br3').classList.add('in');
 }
 $('br-go').addEventListener('click', () => { show('s-forest'); showForest({ welcome: true }); });
+
+/* ---------- Volledig scherm ---------- */
+
+const root = document.documentElement;
+// Op een iPhone is dit false: daar kan alleen de beginscherm-versie schermvullend.
+const canFullscreen = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+const isTouch = window.matchMedia('(pointer: coarse)').matches;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+const launchedFull = () =>
+  window.matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
+
+async function toggleFullscreen() {
+  if (fsElement()) {
+    try { await (document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen()); } catch (e) {}
+    return;
+  }
+  if (canFullscreen) {
+    try {
+      const req = root.requestFullscreen ? root.requestFullscreen({ navigationUI: 'hide' }) : root.webkitRequestFullscreen();
+      // Sommige browsers (bijvoorbeeld in andere apps) geven nooit antwoord; wacht maximaal 1,5 seconde.
+      await Promise.race([req, new Promise((r) => setTimeout(r, 1500))]);
+      if (fsElement()) {
+        try { await screen.orientation.lock('portrait'); } catch (e) { /* niet overal mogelijk */ }
+        return;
+      }
+    } catch (e) { /* valt terug op de uitleg hieronder */ }
+  }
+  showFullscreenHelp();
+}
+
+function showFullscreenHelp() {
+  const steps = isIOS
+    ? ['Tik in Safari op de <b>deelknop</b> (het vierkantje met een pijltje omhoog).', 'Kies <b>Zet op beginscherm</b> en tik op <b>Voeg toe</b>.', 'Open de game via het nieuwe <b>smiley-icoontje</b> op je beginscherm.']
+    : ['Tik in je browser op het <b>menu</b> (⋮ rechtsboven).', 'Kies <b>App installeren</b> of <b>Toevoegen aan startscherm</b>.', 'Open de game via het nieuwe <b>smiley-icoontje</b>.'];
+  steps.push('Let op: foto\'s die je in de browser hebt toegevoegd, zie je niet in de beginscherm-versie (en andersom).');
+  $('fs-help-steps').innerHTML = steps.map((s) => `<li>${s}</li>`).join('');
+  $('fs-help').classList.add('open');
+}
+
+function syncFullscreenButtons() {
+  const on = !!fsElement();
+  // Alleen tonen op telefoons/tablets, en niet als de game al vanaf het beginscherm schermvullend draait.
+  const show = isTouch && !launchedFull();
+  document.querySelectorAll('[data-fs]').forEach((b) => {
+    b.classList.toggle('hidden', !show);
+    b.querySelector('span').textContent = on ? 'Volledig scherm uit' : (b.classList.contains('fs-corner') ? 'Volledig scherm' : 'Volledig scherm aan');
+  });
+  document.querySelectorAll('.fs-card').forEach((c) => c.classList.toggle('hidden', !show));
+}
+
+document.addEventListener('click', (e) => { if (e.target.closest('[data-fs]')) toggleFullscreen(); });
+$('fs-help-ok').addEventListener('click', () => $('fs-help').classList.remove('open'));
+$('fs-help').addEventListener('click', (e) => { if (e.target === $('fs-help')) $('fs-help').classList.remove('open'); });
+document.addEventListener('fullscreenchange', syncFullscreenButtons);
+document.addEventListener('webkitfullscreenchange', syncFullscreenButtons);
+syncFullscreenButtons();
 
 /* ---------- Opstarten ---------- */
 

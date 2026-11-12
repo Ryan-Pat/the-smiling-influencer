@@ -10,17 +10,20 @@
 <meta name="apple-mobile-web-app-title" content="Smiling Influencer">
 <title>The Smiling Influencer</title>
 <meta name="description" content="The Smiling Influencer: een interactieve ervaring over sociale erkenning en zelferkenning, met daarna je eigen Memory Forest.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>😊</text></svg>">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,500;1,9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=5">
+<link rel="stylesheet" href="css/style.css?v=7">
 </head>
 <body>
 <main id="app">
 
   <!-- ============ START ============ -->
   <section class="screen dark" id="s-start">
+    <button class="fs-btn fs-corner hidden" type="button" data-fs><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span>Volledig scherm</span></button>
     <div class="start-inner">
       <p class="kicker">Een interactieve ervaring</p>
       <div class="blob" aria-hidden="true">
@@ -33,7 +36,7 @@
       <h1 class="start-title">The Smiling <em>Influencer</em></h1>
       <p class="start-lead">Je bent een beginnende influencer met <b>100.000</b> volgers. Je doel: <b>1.000.000</b>. Je volgers houden van je glimlach&hellip; zolang je blijft lachen.</p>
       <ul class="start-facts">
-        <li><span>⏱️</span>Ongeveer 5 minuten</li>
+        <li><span>⏱️</span>Ongeveer 3 minuten</li>
         <li><span>🤳</span>Je frontcamera herkent je glimlach</li>
         <li><span>🔒</span>Er wordt niets opgenomen of opgeslagen</li>
       </ul>
@@ -168,6 +171,11 @@
           <p class="muted">Aan het einde van elke periode krijg je een overzicht van je bos. Daarna plant je een nieuw bos; je oude bos blijft bewaard.</p>
           <div class="seg" id="seg-period"><button type="button" data-v="week">Per week</button><button type="button" data-v="month">Per maand</button></div>
         </div>
+        <div class="card fs-card hidden">
+          <h3>📱 Volledig scherm</h3>
+          <p class="muted">Speel zonder adresbalk en knoppen van je browser, zodat de game je hele scherm vult.</p>
+          <button class="btn-soft fs-btn" type="button" data-fs><span>Volledig scherm aan</span></button>
+        </div>
         <div class="card">
           <h3>🌳 Huidige periode</h3>
           <p class="muted" id="set-period"></p>
@@ -259,10 +267,20 @@
     <div class="full-bar"><p class="pv-prompt" id="vw-prompt"></p></div>
   </div>
 
+  <div class="fs-help" id="fs-help" role="dialog" aria-modal="true" aria-labelledby="fs-help-title">
+    <div class="fs-help-card">
+      <div class="fs-help-ic">📱</div>
+      <h2 id="fs-help-title">Speel op volledig scherm</h2>
+      <p>Je browser kan deze pagina niet zelf schermvullend maken. Zet de game daarom op je beginscherm; als je hem daar opent, vult hij je hele scherm.</p>
+      <ol id="fs-help-steps"></ol>
+      <button class="btn-primary small" id="fs-help-ok" type="button">Begrepen</button>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status"></div>
   <input type="file" id="file-cam" accept="image/*" capture="environment" hidden>
   <input type="file" id="file-gal" accept="image/*" hidden>
 </main>
-<script type="module" src="js/main.js?v=5"></script>
+<script type="module" src="js/main.js?v=7"></script>
 </body>
 </html>

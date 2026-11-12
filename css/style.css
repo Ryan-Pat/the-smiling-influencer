@@ -275,7 +275,7 @@ textarea { font: inherit; }
 .fade-line:not(.in) { pointer-events: none; }
 .fade-line.gone { display: none; }
 .black p, .bridge-inner > p { font-size: 1.25rem; line-height: 1.5; max-width: 320px; color: #d8d2c6; }
-p.serif { font-family: var(--serif); font-style: italic; font-weight: 600; font-size: 1.6rem; line-height: 1.3; color: #fff; }
+p.serif { font-family: var(--sans); font-style: normal; font-weight: 700; font-size: 1.5rem; line-height: 1.35; letter-spacing: -.01em; color: #fff; }
 .dot-sun { width: 6px; height: 6px; border-radius: 50%; background: var(--sun); box-shadow: 0 0 18px 4px rgba(255, 201, 60, .5); }
 #bl-next { margin-top: 18px; }
 
@@ -309,7 +309,7 @@ p.serif { font-family: var(--serif); font-style: italic; font-weight: 600; font-
   border: 1px solid rgba(255, 201, 60, .35); color: #ffdc85; font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; font-weight: 800;
 }
 .tag-pill i { width: 6px; height: 6px; border-radius: 50%; background: var(--sun); box-shadow: 0 0 10px var(--sun); }
-.reflect-intro { text-align: center; color: #a49dbb; font-size: .92rem; line-height: 1.5; max-width: 300px; align-self: center; }
+.reflect-intro { text-align: center; color: #c4bed6; font-size: 1rem; line-height: 1.5; max-width: 320px; align-self: center; }
 .dots { display: flex; justify-content: center; gap: 6px; }
 .dots span { width: 22px; height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .12); transition: background .3s; }
 .dots span.on { background: var(--sun); }
@@ -318,12 +318,12 @@ p.serif { font-family: var(--serif); font-style: italic; font-weight: 600; font-
   display: flex; flex-direction: column; gap: 14px; transition: opacity .3s, transform .3s;
 }
 .q-card.out { opacity: 0; transform: translateX(-24px); }
-.q-num { font-size: .75rem; color: #8e88a6; font-weight: 700; }
-.q-card h2 { font-family: var(--serif); font-weight: 600; font-size: 1.4rem; line-height: 1.25; }
+.q-num { font-size: .8rem; color: #a49dbb; font-weight: 700; }
+.q-card h2 { font-family: var(--sans); font-weight: 700; font-size: 1.3rem; line-height: 1.35; letter-spacing: -.01em; }
 .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .opt {
   display: flex; align-items: center; gap: 10px; text-align: left; padding: 14px 12px; border-radius: 14px;
-  background: #1d1a26; border: 1.5px solid #2a2635; font-weight: 600; font-size: .86rem; line-height: 1.25;
+  background: #1d1a26; border: 1.5px solid #2a2635; font-weight: 600; font-size: .95rem; line-height: 1.3; color: #f2eef8;
   transition: border-color .2s, background .2s;
 }
 .opt i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #5a5470; flex: none; transition: .2s; }
@@ -331,13 +331,13 @@ p.serif { font-family: var(--serif); font-style: italic; font-weight: 600; font-
 .opt.on i { border-color: var(--sun); background: var(--sun); box-shadow: inset 0 0 0 3px #1d1a26; }
 .q-card textarea {
   width: 100%; resize: none; padding: 12px 14px; border-radius: 14px; border: 1.5px solid #2a2635;
-  background: #1d1a26; color: #fff; font-size: .92rem; line-height: 1.45;
+  background: #1d1a26; color: #fff; font-size: 1rem; line-height: 1.5;
 }
 .q-card textarea::placeholder { color: #6f6987; }
 .q-card textarea:focus { outline: none; border-color: rgba(255, 201, 60, .6); }
 .q-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: auto; }
 .q-actions .btn-primary { width: auto; flex: 1; max-width: 220px; }
-.q-note { text-align: center; color: #6f6987; font-size: .8rem; }
+.q-note { text-align: center; color: #8e88a6; font-size: .85rem; }
 
 /* ---------- Deel 2: The Memory Forest ---------- */
 
@@ -557,6 +557,28 @@ p.serif { font-family: var(--serif); font-style: italic; font-weight: 600; font-
 .theme-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .theme-pick button { display: flex; align-items: center; gap: 10px; padding: 15px 14px; border-radius: 16px; background: #f3f9f0; font-weight: 700; text-align: left; }
 .theme-pick button span { font-size: 1.3rem; }
+
+/* ---------- Volledig scherm ---------- */
+
+.fs-btn svg { width: 16px; height: 16px; flex: none; }
+.fs-corner {
+  position: absolute; z-index: 5; top: calc(var(--top) + 12px); right: 12px;
+  display: flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 999px;
+  background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14);
+  color: #e7e2f7; font-size: .78rem; font-weight: 700;
+}
+.fs-corner:active { transform: scale(.96); }
+.fs-help {
+  position: absolute; inset: 0; z-index: 95; display: none; align-items: center; justify-content: center;
+  padding: 24px; background: rgba(5, 5, 8, .7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.fs-help.open { display: flex; animation: fadeIn .25s ease; }
+.fs-help-card { background: #fff; color: var(--ink); border-radius: 24px; padding: 24px 20px 20px; max-width: 340px; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.fs-help-ic { font-size: 2.2rem; }
+.fs-help-card h2 { font-family: var(--serif); font-size: 1.4rem; }
+.fs-help-card p { color: #4f5d4f; font-size: .9rem; line-height: 1.5; }
+.fs-help-card ol { text-align: left; padding-left: 22px; color: #2e3b2e; font-size: .9rem; line-height: 1.5; display: grid; gap: 6px; align-self: stretch; }
+.fs-help-card b { color: #1f2a1f; }
 
 .toast {
   position: absolute; left: 50%; bottom: calc(var(--bot) + 110px); z-index: 90; transform: translate(-50%, 20px);
