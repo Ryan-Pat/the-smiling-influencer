@@ -1,7 +1,7 @@
 // Deel 1 – The Smiling Influencer
 // Een gescripte livestream van ongeveer vijf minuten die je niet kunt winnen.
 
-import { openCamera, cameraErrorText } from './camera.js?v=8';
+import { openCamera, cameraErrorText } from './camera.js?v=9';
 
 const $ = (id) => document.getElementById(id);
 const rand =(a, b) => a + Math.random() * (b - a);
@@ -187,7 +187,11 @@ function overlay(kind, text, buttons) {
       b.type = 'button';
       b.className = i === 0 ? 'btn-primary small' : 'btn-link';
       b.textContent = label;
-      b.onclick = () => res(i);
+      b.onclick = async () => {
+        // Een tik is het moment om volledig scherm terug te zetten als de camera-vraag het uitzette.
+        if (S && S.fs) await S.fs.restore();
+        res(i);
+      };
       wrap.appendChild(b);
     });
   });
@@ -203,10 +207,11 @@ async function toManual(msg) {
 
 /* ---------- Start ---------- */
 
-export async function startInfluencer({ useCamera, onEnd }) {
+// fullscreen: { lost(), restore() } uit main.js, om volledig scherm terug te zetten na de camera-vraag.
+export async function startInfluencer({ useCamera, onEnd, fullscreen = null }) {
   stopAll();
   S = {
-    mode: useCamera ? 'camera' : 'manual', onEnd,
+    mode: useCamera ? 'camera' : 'manual', onEnd, fs: fullscreen,
     followers: START, shownF: -1, t: 0, phase: 1, step: 'pre', idx: -1, task: null,
     progress: 0, taskT: 0, gapT: 0, gapOk: true, p3: null, col: null,
     happy: 0, face: false, sm: false, held: false, lostAt: 0,
@@ -219,7 +224,12 @@ export async function startInfluencer({ useCamera, onEnd }) {
   if (useCamera) {
     for (;;) {
       overlay('spin', 'Je camera wordt gestart…');
-      try { await startCamera(); break; } catch (e) {
+      try {
+        await startCamera();
+        // De toestemmingsvraag zet volledig scherm uit. Was de tik op Start nog maar net, dan mag het meteen terug.
+        if (S === me && S.fs) S.fs.restore();
+        break;
+      } catch (e) {
         console.warn('Camera kon niet starten:', e && e.name, e && e.message);
         if (S !== me) return;
         const choice = await overlay('info', cameraErrorText(e), ['Opnieuw proberen', 'Speel zonder camera']);
@@ -250,6 +260,12 @@ export async function startInfluencer({ useCamera, onEnd }) {
     await toManual('Je speelt zonder camera. Houd de groene knop ingedrukt zolang je glimlacht.');
   }
   if (S !== me) return;
+
+  // Staat volledig scherm nog uit door de camera-vraag? Dan is één tik nodig om het terug te zetten.
+  if (S.fs && S.fs.lost()) {
+    await overlay('info', S.mode === 'camera' ? 'Je camera staat aan. Klaar om live te gaan?' : 'Klaar om live te gaan?', 'Ga live');
+    if (S !== me) return;
+  }
 
   for (const n of [3, 2, 1]) {
     overlay('count', n);

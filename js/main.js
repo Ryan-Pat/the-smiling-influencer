@@ -1,8 +1,8 @@
 // The Smiling Influencer – schermen en de overgang tussen deel 1 en deel 2.
 // Verhoog ?v= bij elke nieuwe versie (overal hetzelfde nummer), zodat browsers geen oude bestanden mengen.
-import { startInfluencer, SPEED } from './influencer.js?v=8';
-import { showForest, setReplayHandler } from './forest.js?v=8';
-import { state, save } from './store.js?v=8';
+import { startInfluencer, SPEED } from './influencer.js?v=9';
+import { showForest, setReplayHandler } from './forest.js?v=9';
+import { state, save } from './store.js?v=9';
 
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, SPEED > 1 ? ms / 3 : ms));
@@ -26,8 +26,9 @@ function openStart() {
 }
 
 function begin(useCamera) {
+  keepFull = !!fsElement();
   show('s-live');
-  startInfluencer({ useCamera, onEnd: blackout });
+  startInfluencer({ useCamera, onEnd: blackout, fullscreen: { lost: fullscreenLost, restore: restoreFullscreen } });
 }
 
 $('btn-start').addEventListener('click', () => begin(true));
@@ -162,18 +163,42 @@ const fsElement = () => document.fullscreenElement || document.webkitFullscreenE
 const launchedFull = () => !fsElement() &&
   (window.matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true);
 
+// Of de speler volledig scherm aan wil hebben. De toestemmingsvraag voor de camera zet het in Chrome
+// op Android uit, en de site mag het alleen na een tik weer aanzetten (zie influencer.js).
+let keepFull = false;
+
+function requestFull() {
+  return root.requestFullscreen ? root.requestFullscreen({ navigationUI: 'hide' }) : root.webkitRequestFullscreen();
+}
+
+async function lockPortrait() {
+  try { await screen.orientation.lock('portrait'); } catch (e) { /* niet overal mogelijk */ }
+}
+
+function fullscreenLost() {
+  return keepFull && canFullscreen && !fsElement();
+}
+
+// Werkt alleen vlak na een tik van de speler; anders weigert de browser stilletjes.
+async function restoreFullscreen() {
+  if (!fullscreenLost()) return;
+  try { await Promise.race([requestFull(), new Promise((r) => setTimeout(r, 1500))]); } catch (e) { return; }
+  if (fsElement()) lockPortrait();
+}
+
 async function toggleFullscreen() {
   if (fsElement()) {
+    keepFull = false;
     try { await (document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen()); } catch (e) {}
     return;
   }
   if (canFullscreen) {
     try {
-      const req = root.requestFullscreen ? root.requestFullscreen({ navigationUI: 'hide' }) : root.webkitRequestFullscreen();
       // Sommige browsers (bijvoorbeeld in andere apps) geven nooit antwoord; wacht maximaal 1,5 seconde.
-      await Promise.race([req, new Promise((r) => setTimeout(r, 1500))]);
+      await Promise.race([requestFull(), new Promise((r) => setTimeout(r, 1500))]);
       if (fsElement()) {
-        try { await screen.orientation.lock('portrait'); } catch (e) { /* niet overal mogelijk */ }
+        keepFull = true;
+        await lockPortrait();
         return;
       }
     } catch (e) { /* valt terug op de uitleg hieronder */ }
