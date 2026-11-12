@@ -3,7 +3,8 @@
 import {
   state, save, currentPeriod, newPeriod, periodEnd, periodLabel, periodWord, fmtRange, fmtDate,
   putPhoto, allPhotos, deletePhoto, clearAll, processImage, uid,
-} from './store.js';
+} from './store.js?v=5';
+import { openCamera, cameraErrorText } from './camera.js?v=5';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -212,11 +213,25 @@ function setView(v) {
 
 /* ---------- Bovenste kaart ---------- */
 
+const FREE_PROMPT = 'Vrije herinnering: iets uit je dag dat je wilt bewaren.';
+
+// Een opdracht is gedaan als er deze periode een foto bij hoort.
+function isDone(themeId, prompt) {
+  return photos.some((p) => p.theme === themeId && p.prompt === prompt);
+}
+
+function openPrompts(th) {
+  return th.prompts.filter((pr) => !isDone(th.id, pr));
+}
+
 function dailyIdea() {
   const d = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
-  const th = THEMES[d % THEMES.length];
-  const prompt = th.prompts[Math.floor(d / THEMES.length) % th.prompts.length];
-  return { th, prompt };
+  for (let i = 0; i < THEMES.length; i++) {
+    const th = THEMES[(d + i) % THEMES.length];
+    const open = openPrompts(th);
+    if (open.length) return { th, prompt: open[Math.floor(d / THEMES.length) % open.length] };
+  }
+  return null; // alles gedaan
 }
 
 function renderWeekCard() {
@@ -234,8 +249,17 @@ function renderWeekCard() {
   } else {
     card.classList.remove('ended');
     const days = Math.ceil((end - Date.now()) / 86400000);
-    const { th, prompt } = dailyIdea();
-    card.innerHTML = `<div class="wc-top"><span class="wc-tag">💡 Idee voor vandaag</span><span class="wc-days">${esc(periodLabel(p))} · ${days <= 1 ? 'laatste dag' : `nog ${days} dagen`}</span></div>
+    const top = `<span class="wc-days">${esc(periodLabel(p))} · ${days <= 1 ? 'laatste dag' : `nog ${days} dagen`}</span>`;
+    const idea = dailyIdea();
+    if (!idea) {
+      card.innerHTML = `<div class="wc-top"><span class="wc-tag done">🌳 Alles gedaan</span>${top}</div>
+        <h3>Je hebt alle opdrachten van deze ${word} gedaan!</h3>
+        <p>Je mag altijd nog vrije herinneringen toevoegen. Tik hier om er een te maken.</p>`;
+      card.onclick = openThemePicker;
+      return;
+    }
+    const { th, prompt } = idea;
+    card.innerHTML = `<div class="wc-top"><span class="wc-tag">💡 Idee voor vandaag</span>${top}</div>
       <h3>${esc(prompt.replace(/\.$/, ''))} ${th.icon}</h3>
       <p>Geef je <b>${esc(th.name)}</b>-boom een nieuwe herinnering om hem te laten groeien.</p>`;
     card.onclick = () => openTreeSheet(th, prompt);
@@ -272,14 +296,18 @@ function gridHTML(list) {
 
 function openTreeSheet(th, prompt) {
   const list = photos.filter((p) => p.theme === th.id);
-  pending = { theme: th.id, prompt: prompt || th.prompts[Math.floor(Math.random() * th.prompts.length)], source: 'cam' };
+  const open = openPrompts(th);
+  const free = open.length === 0;
+  const first = prompt && open.includes(prompt) ? prompt : (free ? FREE_PROMPT : open[Math.floor(Math.random() * open.length)]);
+  pending = { theme: th.id, prompt: first, source: 'cam' };
   selTree(th.id);
+  const doneCount = th.prompts.length - open.length;
   openSheet(`
     <div class="sh-head"><span class="sh-ic">${th.icon}</span><div><h3>${esc(th.name)}-boom</h3><p>${countText(list.length)}</p></div></div>
-    <div class="prompt-card">
-      <span class="pc-label">Foto-opdracht</span>
-      <p class="pc-text" id="pc-text">${esc(pending.prompt)}</p>
-      <button class="pc-shuffle" type="button" id="pc-shuffle">🔀 Andere opdracht</button>
+    <div class="prompt-card${free ? ' free' : ''}">
+      <span class="pc-label">${free ? '🎉 Alle opdrachten gedaan' : `Foto-opdracht${doneCount ? ` · ${doneCount} van ${th.prompts.length} gedaan` : ''}`}</span>
+      <p class="pc-text" id="pc-text">${free ? 'Voeg gerust een vrije herinnering toe: iets uit je dag dat je wilt bewaren.' : esc(pending.prompt)}</p>
+      ${open.length > 1 ? '<button class="pc-shuffle" type="button" id="pc-shuffle">🔀 Andere opdracht</button>' : ''}
     </div>
     <div class="sh-actions">
       <button class="btn-green" type="button" id="act-cam">📷 Maak een foto</button>
@@ -288,11 +316,13 @@ function openTreeSheet(th, prompt) {
     <p class="drop-hint">Je kunt een foto ook hierheen slepen, of plakken met Ctrl+V.</p>
     <p class="sh-note">Past dit thema niet bij jou? Geen probleem, je hoeft deze boom niet te vullen.</p>
     ${gridHTML(list)}`, () => selTree(null));
-  $('pc-shuffle').onclick = () => {
-    const others = th.prompts.filter((x) => x !== pending.prompt);
-    pending.prompt = others[Math.floor(Math.random() * others.length)] || pending.prompt;
-    $('pc-text').textContent = pending.prompt;
-  };
+  if ($('pc-shuffle')) {
+    $('pc-shuffle').onclick = () => {
+      const others = open.filter((x) => x !== pending.prompt);
+      pending.prompt = others[Math.floor(Math.random() * others.length)] || pending.prompt;
+      $('pc-text').textContent = pending.prompt;
+    };
+  }
   $('act-cam').onclick = () => pickFile('cam');
   $('act-gal').onclick = () => pickFile('gal');
 }
@@ -341,10 +371,7 @@ let facing = 'user';
 
 async function startShootCam() {
   stopShootCam();
-  shootStream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 960 } },
-    audio: false,
-  });
+  shootStream = await openCamera(facing, { w: 1280, h: 960 });
   const v = $('sh-video');
   v.srcObject = shootStream;
   v.classList.toggle('mirror', facing === 'user');
@@ -370,7 +397,7 @@ async function openShooter() {
   } catch (e) {
     console.warn('Webcam kon niet starten:', e && e.name);
     closeShooter();
-    toast('Je camera kon niet worden gestart. Kies een foto uit je bestanden of sleep er een in het paneel.');
+    alert(cameraErrorText(e) + '\n\nJe kunt ook een foto uit je bestanden kiezen, of er een naar het paneel slepen.');
   }
 }
 
@@ -522,10 +549,17 @@ async function deleteCurrent() {
 
 function renderTasks() {
   $('tasks-list').innerHTML = THEMES.map((th) => {
-    const n = photos.filter((p) => p.theme === th.id).length;
+    const open = openPrompts(th);
+    const done = th.prompts.filter((pr) => !open.includes(pr));
+    const thumbFor = (pr) => {
+      const p = photos.filter((x) => x.theme === th.id && x.prompt === pr).pop();
+      return p ? `<img src="${p.thumb}" alt="">` : '';
+    };
     return `<div class="card">
-      <h3><span>${th.icon}</span>${esc(th.name)}<span class="card-cnt">${n ? countText(n) : ''}</span></h3>
-      ${th.prompts.map((pr) => `<button class="prompt-row" type="button" data-theme="${th.id}" data-prompt="${esc(pr)}"><span>${esc(pr)}</span><span>📷</span></button>`).join('')}
+      <h3><span>${th.icon}</span>${esc(th.name)}<span class="card-cnt">${done.length ? `${done.length} van ${th.prompts.length} gedaan` : ''}</span></h3>
+      ${open.map((pr) => `<button class="prompt-row" type="button" data-theme="${th.id}" data-prompt="${esc(pr)}"><span>${esc(pr)}</span><span>📷</span></button>`).join('')}
+      ${open.length ? '' : '<p class="all-done">🎉 Alle opdrachten van deze boom zijn gedaan. Vrije herinneringen kan je altijd nog toevoegen via de boom.</p>'}
+      ${done.map((pr) => `<div class="prompt-done">${thumbFor(pr)}<span>${esc(pr)}</span><b>✓</b></div>`).join('')}
     </div>`;
   }).join('');
 }

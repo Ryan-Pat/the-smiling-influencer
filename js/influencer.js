@@ -1,8 +1,10 @@
 // Deel 1 – The Smiling Influencer
 // Een gescripte livestream van ongeveer vijf minuten die je niet kunt winnen.
 
+import { openCamera, cameraErrorText } from './camera.js?v=5';
+
 const $ = (id) => document.getElementById(id);
-const rand = (a, b) => a + Math.random() * (b - a);
+const rand =(a, b) => a + Math.random() * (b - a);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const fmt = (n) => Math.max(0, Math.round(n)).toLocaleString('nl-NL');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -103,46 +105,8 @@ function withTimeout(p, ms) {
   return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 }
 
-function namedError(name) {
-  const e = new Error(name);
-  e.name = name;
-  return e;
-}
-
-function cameraErrorText(e) {
-  switch (e && e.name) {
-    case 'InsecureError':
-      return 'De camera werkt alleen via een beveiligde verbinding (https) of via localhost op je eigen computer.';
-    case 'UnsupportedError':
-      return 'Deze browser kan de camera niet gebruiken. Open de site in Chrome, Edge of Safari.';
-    case 'NotAllowedError':
-    case 'SecurityError':
-      return 'Je browser geeft geen toegang tot de camera. Klik op het camera-icoontje in de adresbalk, kies "Toestaan" en probeer het opnieuw.';
-    case 'NotFoundError':
-    case 'OverconstrainedError':
-      return 'Er is geen camera gevonden. Controleer of je camera is aangesloten en probeer het opnieuw.';
-    case 'NotReadableError':
-    case 'AbortError':
-      return 'Je camera wordt al door een ander programma gebruikt (bijvoorbeeld Discord, Teams of Logitech-software). Sluit dat programma en probeer het opnieuw.';
-    default:
-      return 'De camera kon niet worden gestart. Probeer het opnieuw of speel zonder camera.';
-  }
-}
-
 async function startCamera() {
-  if (!window.isSecureContext) throw namedError('InsecureError');
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw namedError('UnsupportedError');
-  let stream;
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-      audio: false,
-    });
-  } catch (e) {
-    // Sommige webcams weigeren de voorkeursinstellingen; probeer dan de eenvoudigste vraag.
-    if (!['NotFoundError', 'OverconstrainedError', 'NotReadableError', 'AbortError'].includes(e.name)) throw e;
-    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-  }
+  const stream = await openCamera('user');
   S.stream = stream;
   const v = $('video');
   v.srcObject = stream;

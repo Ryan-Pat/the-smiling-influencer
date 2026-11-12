@@ -458,6 +458,16 @@ p.serif { font-family: var(--serif); font-style: italic; font-weight: 600; font-
   display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; text-align: left;
   padding: 11px 12px; border-radius: 12px; background: #f3f9f0; margin-top: 6px; font-size: .88rem; color: #2e3b2e; font-weight: 500;
 }
+.prompt-done {
+  display: flex; align-items: center; gap: 10px; margin-top: 6px; padding: 7px 10px; border-radius: 12px;
+  background: #fafcf8; color: #8a978a; font-size: .82rem; text-decoration: line-through; text-decoration-color: rgba(0, 0, 0, .25);
+}
+.prompt-done img { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; flex: none; }
+.prompt-done span { flex: 1; }
+.prompt-done b { color: var(--leaf); text-decoration: none; }
+.all-done { margin-top: 6px; padding: 10px 12px; border-radius: 12px; background: #eaf6e7; color: #2c7a3c; font-size: .85rem; font-weight: 600; line-height: 1.4; }
+.prompt-card.free { background: linear-gradient(135deg, #e9f7e4, #d6f0cf); }
+.prompt-card.free .pc-label { color: #2c7a3c; }
 .arch-item { display: flex; gap: 12px; align-items: center; }
 .collage { width: 66px; height: 66px; border-radius: 14px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #dff2da; flex: none; }
 .collage img { width: 100%; height: 100%; object-fit: cover; }

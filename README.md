@@ -36,3 +36,7 @@ Een hybride, interactieve ervaring voor jongeren (12–25 jaar) over smartphoneg
 - `?speed=10` achter de URL laat deel 1 tien keer sneller lopen.
 - `#bos`, `#reflectie`, `#zwart` en `#overgang` openen direct een bepaald scherm.
 - De camera werkt alleen via HTTPS (zoals GitHub Pages) of op `localhost`.
+
+## Nieuwe versie online zetten
+
+GitHub Pages bewaart bestanden 10 minuten in de cache. Verhoog daarom bij elke nieuwe versie het nummer `?v=` overal tegelijk: in `index.html` (stylesheet en `main.js`) en in de `import`-regels van `js/main.js`, `js/influencer.js` en `js/forest.js`. Gebruik overal hetzelfde nummer, anders laadt de browser `store.js` twee keer.
