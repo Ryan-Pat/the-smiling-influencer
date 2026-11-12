@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,500;1,9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=7">
+<link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
 <main id="app">
@@ -77,6 +77,7 @@
           <path id="face-mouth" d="M34 64 Q50 64 66 64"/>
         </svg>
       </div>
+      <button class="fs-btn fs-cam hidden" type="button" data-fs aria-label="Volledig scherm"><svg class="fs-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><svg class="fs-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
       <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
       <div class="status" id="status"><i></i><span id="status-text">Bijna live…</span><b class="meter" title="Hoe sterk je glimlach wordt herkend"><u id="meter-fill"></u></b></div>
       <div class="hearts" id="hearts"></div>
@@ -281,6 +282,6 @@
   <input type="file" id="file-cam" accept="image/*" capture="environment" hidden>
   <input type="file" id="file-gal" accept="image/*" hidden>
 </main>
-<script type="module" src="js/main.js?v=7"></script>
+<script type="module" src="js/main.js?v=8"></script>
 </body>
 </html>

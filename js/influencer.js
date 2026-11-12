@@ -1,7 +1,7 @@
 // Deel 1 – The Smiling Influencer
 // Een gescripte livestream van ongeveer vijf minuten die je niet kunt winnen.
 
-import { openCamera, cameraErrorText } from './camera.js?v=7';
+import { openCamera, cameraErrorText } from './camera.js?v=8';
 
 const $ = (id) => document.getElementById(id);
 const rand =(a, b) => a + Math.random() * (b - a);

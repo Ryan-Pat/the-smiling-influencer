@@ -568,6 +568,20 @@ p.serif { font-family: var(--sans); font-style: normal; font-weight: 700; font-s
   color: #e7e2f7; font-size: .78rem; font-weight: 700;
 }
 .fs-corner:active { transform: scale(.96); }
+/* Alleen een icoontje, rechtsonder in het camerabeeld van de livestream (ook boven het laad- en aftelscherm). */
+.fs-cam {
+  position: absolute; z-index: 7; right: 10px; bottom: 10px; width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center; color: #fff;
+  background: rgba(10, 10, 14, .55); border: 1px solid rgba(255, 255, 255, .18);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.fs-cam:active { transform: scale(.92); }
+.fs-cam svg { width: 18px; height: 18px; }
+.fs-btn .fs-exit, .fs-btn.is-on .fs-enter { display: none; }
+.fs-btn.is-on .fs-exit { display: block; }
+/* De knop vervangt het hoekje rechtsonder; de hartjes stijgen erboven op. */
+.fs-cam:not(.hidden) ~ .corner.br { display: none; }
+.fs-cam:not(.hidden) ~ .hearts { bottom: 58px; }
 .fs-help {
   position: absolute; inset: 0; z-index: 95; display: none; align-items: center; justify-content: center;
   padding: 24px; background: rgba(5, 5, 8, .7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);

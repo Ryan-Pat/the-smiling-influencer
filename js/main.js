@@ -1,8 +1,8 @@
 // The Smiling Influencer – schermen en de overgang tussen deel 1 en deel 2.
 // Verhoog ?v= bij elke nieuwe versie (overal hetzelfde nummer), zodat browsers geen oude bestanden mengen.
-import { startInfluencer, SPEED } from './influencer.js?v=7';
-import { showForest, setReplayHandler } from './forest.js?v=7';
-import { state, save } from './store.js?v=7';
+import { startInfluencer, SPEED } from './influencer.js?v=8';
+import { showForest, setReplayHandler } from './forest.js?v=8';
+import { state, save } from './store.js?v=8';
 
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, SPEED > 1 ? ms / 3 : ms));
@@ -157,8 +157,10 @@ const canFullscreen = !!(document.fullscreenEnabled || document.webkitFullscreen
 const isTouch = window.matchMedia('(pointer: coarse)').matches;
 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;
-const launchedFull = () =>
-  window.matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
+// Gestart vanaf het beginscherm. Chrome meldt display-mode fullscreen ook als de knop het scherm vult;
+// dat telt niet mee, anders verdwijnen de knoppen en kan je het niet meer uitzetten.
+const launchedFull = () => !fsElement() &&
+  (window.matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true);
 
 async function toggleFullscreen() {
   if (fsElement()) {
@@ -194,7 +196,11 @@ function syncFullscreenButtons() {
   const show = isTouch && !launchedFull();
   document.querySelectorAll('[data-fs]').forEach((b) => {
     b.classList.toggle('hidden', !show);
-    b.querySelector('span').textContent = on ? 'Volledig scherm uit' : (b.classList.contains('fs-corner') ? 'Volledig scherm' : 'Volledig scherm aan');
+    b.classList.toggle('is-on', on);
+    const label = on ? 'Volledig scherm uit' : (b.classList.contains('fs-corner') ? 'Volledig scherm' : 'Volledig scherm aan');
+    const span = b.querySelector('span');
+    if (span) span.textContent = label;
+    else b.setAttribute('aria-label', label); // knop met alleen een icoontje
   });
   document.querySelectorAll('.fs-card').forEach((c) => c.classList.toggle('hidden', !show));
 }
