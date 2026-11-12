@@ -1,0 +1,160 @@
+// The Smiling Influencer – schermen en de overgang tussen deel 1 en deel 2.
+import { startInfluencer, SPEED } from './influencer.js';
+import { showForest, setReplayHandler } from './forest.js';
+import { state, save } from './store.js';
+
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise((r) => setTimeout(r, SPEED > 1 ? ms / 3 : ms));
+
+const THEME_COLOR = {
+  's-start': '#0b0a0f', 's-live': '#0b0a0f', 's-black': '#000000',
+  's-reflect': '#0b0a0f', 's-bridge': '#000000', 's-forest': '#c6ecfb',
+};
+
+export function show(id) {
+  document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === id));
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = THEME_COLOR[id] || '#0b0a0f';
+}
+
+/* ---------- Start ---------- */
+
+function openStart() {
+  $('btn-to-forest').classList.toggle('hidden', !state.part1Done);
+  show('s-start');
+}
+
+function begin(useCamera) {
+  show('s-live');
+  startInfluencer({ useCamera, onEnd: blackout });
+}
+
+$('btn-start').addEventListener('click', () => begin(true));
+$('btn-start-nocam').addEventListener('click', () => begin(false));
+$('btn-to-forest').addEventListener('click', () => { show('s-forest'); showForest(); });
+
+/* ---------- Zwart scherm ---------- */
+
+let blackRun = 0;
+async function blackout() {
+  const run = ++blackRun;
+  ['bl1', 'bl-dot', 'bl2', 'bl-next'].forEach((id) => $(id).classList.remove('in'));
+  show('s-black');
+  const steps = [[1500, 'bl1'], [3800, 'bl-dot'], [1200, 'bl2'], [4200, 'bl-next']];
+  for (const [ms, id] of steps) {
+    await sleep(ms);
+    if (run !== blackRun) return;
+    $(id).classList.add('in');
+  }
+}
+$('bl-next').addEventListener('click', startReflection);
+
+/* ---------- Reflectie ---------- */
+
+const QUESTIONS = [
+  { q: 'Hoe voelde het om steeds te moeten glimlachen?', o: ['Leuk', 'Vermoeiend', 'Onnatuurlijk', 'Stressvol'] },
+  { q: 'Wat vond je van de positieve reacties?', o: ['Ze voelden fijn', 'Ze motiveerden me', 'Ze voelden leeg', 'Ik lette er niet op'] },
+  { q: 'Hoe voelde het toen je negatieve reacties kreeg?', o: ['Het raakte me', 'Ik ging harder mijn best doen', 'Ik werd er onzeker van', 'Het deed me weinig'] },
+  { q: 'Had je het gevoel dat je zelf bepaalde wat je deed?', o: ['Totaal niet', 'Een beetje', 'In het begin wel', 'Ja, helemaal'] },
+  { q: 'Was het verzamelen van volgers de moeite waard?', o: ['Ja', 'Nee', 'Een beetje', 'Ik weet het niet'] },
+];
+
+let qi = 0;
+let answers = [];
+
+function startReflection() {
+  qi = 0;
+  answers = QUESTIONS.map(() => ({ choice: null, text: '' }));
+  $('q-card').classList.remove('out');
+  show('s-reflect');
+  renderQ();
+}
+
+function renderQ() {
+  const Q = QUESTIONS[qi];
+  $('q-dots').innerHTML = QUESTIONS.map((_, i) => `<span class="${i <= qi ? 'on' : ''}"></span>`).join('');
+  $('q-num').textContent = `Vraag ${qi + 1} van ${QUESTIONS.length}`;
+  $('q-title').textContent = Q.q;
+  const opts = $('q-opts');
+  opts.innerHTML = '';
+  Q.o.forEach((o, i) => {
+    const b = document.createElement('button');
+    b.className = 'opt' + (answers[qi].choice === i ? ' on' : '');
+    b.dataset.i = i;
+    b.innerHTML = '<i></i><span></span>';
+    b.querySelector('span').textContent = o;
+    opts.appendChild(b);
+  });
+  $('q-text').value = answers[qi].text;
+  $('q-next').textContent = qi === QUESTIONS.length - 1 ? 'Afronden' : 'Volgende';
+  $('s-reflect').querySelector('.reflect-inner').scrollTop = 0;
+}
+
+$('q-opts').addEventListener('click', (e) => {
+  const b = e.target.closest('.opt');
+  if (!b) return;
+  const i = Number(b.dataset.i);
+  answers[qi].choice = answers[qi].choice === i ? null : i;
+  $('q-opts').querySelectorAll('.opt').forEach((el) => el.classList.toggle('on', Number(el.dataset.i) === answers[qi].choice));
+});
+
+let advancing = false;
+async function advance(keep) {
+  if (advancing) return;
+  advancing = true;
+  if (keep) answers[qi].text = $('q-text').value.trim();
+  else answers[qi] = { choice: null, text: '', skipped: true };
+  const card = $('q-card');
+  card.classList.add('out');
+  await new Promise((r) => setTimeout(r, 320));
+  if (qi < QUESTIONS.length - 1) {
+    qi++;
+    renderQ();
+    card.classList.remove('out');
+  } else {
+    finishReflection();
+  }
+  advancing = false;
+}
+$('q-next').addEventListener('click', () => advance(true));
+$('q-skip').addEventListener('click', () => advance(false));
+
+function finishReflection() {
+  state.part1Done = true;
+  state.reflection1 = answers.map((a, i) => ({
+    vraag: QUESTIONS[i].q,
+    keuze: a.choice != null ? QUESTIONS[i].o[a.choice] : null,
+    tekst: a.text || '',
+  }));
+  save();
+  bridge();
+}
+
+/* ---------- Overgang naar The Memory Forest ---------- */
+
+let bridgeRun = 0;
+async function bridge() {
+  const run = ++bridgeRun;
+  const sec = $('s-bridge');
+  sec.classList.remove('dawn');
+  ['br1', 'br2', 'br3'].forEach((id) => $(id).classList.remove('in', 'gone'));
+  show('s-bridge');
+  const go = async (ms) => { await sleep(ms); return run === bridgeRun; };
+  if (!(await go(1200))) return; $('br1').classList.add('in');
+  if (!(await go(3200))) return; $('br2').classList.add('in');
+  if (!(await go(4200))) return; $('br1').classList.remove('in'); $('br2').classList.remove('in');
+  if (!(await go(1800))) return; $('br1').classList.add('gone'); $('br2').classList.add('gone'); sec.classList.add('dawn');
+  if (!(await go(1400))) return; $('br3').classList.add('in');
+}
+$('br-go').addEventListener('click', () => { show('s-forest'); showForest({ welcome: true }); });
+
+/* ---------- Opstarten ---------- */
+
+setReplayHandler(openStart);
+
+const hash = location.hash.replace('#', '');
+if (hash === 'zwart') blackout();
+else if (hash === 'reflectie') startReflection();
+else if (hash === 'overgang') bridge();
+else if (hash === 'bos' || state.part1Done) { show('s-forest'); showForest(); }
+else openStart();
