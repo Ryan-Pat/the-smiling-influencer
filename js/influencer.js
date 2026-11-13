@@ -1,7 +1,7 @@
 // Deel 1 – The Smiling Influencer
-// Een gescripte livestream van ongeveer vijf minuten die je niet kunt winnen.
+// Een gescripte livestream van ongeveer drie minuten die je niet kunt winnen.
 
-import { openCamera, cameraErrorText } from './camera.js?v=9';
+import { openCamera, cameraErrorText } from './camera.js?v=10';
 
 const $ = (id) => document.getElementById(id);
 const rand =(a, b) => a + Math.random() * (b - a);
@@ -25,12 +25,27 @@ const P3_END = 158;     // fase 3 eindigt rond dit moment (s)
 const COLLAPSE = 10;    // duur van de laatste val naar 0 (s)
 const P3_FILL = 6;      // zo lang glimlachen voordat het "niet goed genoeg" is
 
+// Volgers per seconde in fase 1 en 2 (willekeurig tussen min en max).
+// Wie de hele tijd glimlacht, heeft rond de 900.000 volgers als fase 3 begint: bijna het doel.
+const RATE = {
+  1: { smile: [4500, 7500], none: [400, 900] },
+  2: { smile: [3500, 6500], none: [6000, 10000] },
+};
+const FAIL_PEN = { 1: 6000, 2: 40000 };   // straf als de tijd van een opdracht op is
+
+// Fase 3: de volgers lopen meteen hard weg. Blijf je glimlachen, dan houd je aan het eind
+// P3_KEEP van je volgers over; niet glimlachen of "niet goed genoeg" kost nog extra.
+const P3_KEEP = 0.2;
+const P3_SHAPE = 0.75;               // < 1: de grootste val zit aan het begin van fase 3
+const P3_NONE = [8000, 14000];       // extra verlies per seconde zonder glimlach
+const P3_REJECT = 10000;             // extra verlies bij "niet goed genoeg"
+
 const TASKS = [
-  { p: 1, text: 'Glimlach 5 seconden naar de camera.', need: 5, max: 15, bonus: 15000 },
-  { p: 1, text: 'Glimlach 10 seconden naar de camera.', need: 10, max: 20, bonus: 20000 },
-  { p: 1, text: 'Houd je glimlach 15 seconden vast.', need: 15, max: 28, bonus: 25000 },
-  { p: 2, text: 'Blijf 20 seconden glimlachen.', need: 20, max: 32, bonus: 9000, drain: true },
-  { p: 2, text: 'Houd je glimlach 30 seconden vast.', need: 30, max: 42, bonus: 6000, drain: true },
+  { p: 1, text: 'Glimlach 5 seconden naar de camera.', need: 5, max: 15, bonus: 25000 },
+  { p: 1, text: 'Glimlach 10 seconden naar de camera.', need: 10, max: 20, bonus: 35000 },
+  { p: 1, text: 'Houd je glimlach 15 seconden vast.', need: 15, max: 28, bonus: 50000 },
+  { p: 2, text: 'Blijf 20 seconden glimlachen.', need: 20, max: 32, bonus: 40000, drain: true },
+  { p: 2, text: 'Houd je glimlach 30 seconden vast.', need: 30, max: 42, bonus: 60000, drain: true },
   { p: 2, text: 'Je volgers willen dat je blijft lachen!', hold: 15 },
 ];
 
@@ -317,10 +332,8 @@ function add(d) {
 }
 
 function base(dt, sm) {
-  let d;
-  if (S.phase === 1) d = sm ? rand(1800, 3200) : -rand(400, 900);
-  else d = sm ? rand(500, 1300) - 200 : -rand(2800, 4800);
-  add(d * dt);
+  const r = RATE[S.phase] || RATE[2];
+  add((sm ? rand(...r.smile) : -rand(...r.none)) * dt);
 }
 
 function step(dt, sm) {
@@ -394,7 +407,7 @@ function complete() {
 }
 
 function fail() {
-  const pen = S.phase === 1 ? 6000 : 15000;
+  const pen = FAIL_PEN[S.phase] || FAIL_PEN[2];
   S.followers = Math.max(0, S.followers - pen);
   showDelta(-pen, true);
   S.step = 'gap';
@@ -420,8 +433,8 @@ function startP3() {
 function p3step(dt, sm) {
   const P = S.p3;
   const u = Math.min(1, (S.t - P.start) / P.dur);
-  if (!sm) P.pen += rand(2000, 3500) * dt;
-  const target = Math.max(0, P.F0 * (1 - 0.72 * Math.pow(u, 1.6)) - P.pen);
+  if (!sm) P.pen += rand(...P3_NONE) * dt;
+  const target = Math.max(0, P.F0 * (1 - (1 - P3_KEEP) * Math.pow(u, P3_SHAPE)) - P.pen);
   if (target < S.followers) add(target - S.followers);
 
   P.dT += dt;
@@ -435,7 +448,7 @@ function p3step(dt, sm) {
   else P.prog = Math.max(0, P.prog - dt * 2);
   if (P.prog >= P3_FILL) {
     P.prog = 0;
-    P.pen += 4000;
+    P.pen += P3_REJECT;
     reject();
   }
 
@@ -532,7 +545,7 @@ function postComment(sm) {
     if (!sm) return comment(pick(C.neg), 'neg');
     return Math.random() < 0.45 ? comment(pick(C.pos), 'pos') : comment(pick(C.demand), 'dem');
   }
-  if (Math.random() < 0.18) return sys(`${pick(USERS)} volgt je niet meer`);
+  if (Math.random() < 0.35) return sys(`${pick(USERS)} volgt je niet meer`);
   comment(pick(Math.random() < 0.2 ? C.demand : C.p3), 'neg');
 }
 
