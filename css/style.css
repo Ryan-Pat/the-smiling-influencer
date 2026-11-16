@@ -85,8 +85,7 @@ textarea { font: inherit; }
   0%, 100% { border-radius: 40% 60% 55% 45% / 50% 45% 55% 50%; }
   50% { border-radius: 55% 45% 40% 60% / 45% 55% 50% 50%; }
 }
-.start-title { font-family: var(--serif); font-weight: 800; font-size: 2.7rem; line-height: 1; }
-.start-title em { font-style: italic; font-weight: 700; color: var(--sun); }
+.start-title { font-family: var(--serif); font-weight: 800; font-size: 2.7rem; line-height: 1; color: var(--sun); }
 .start-lead { color: #cfc8e6; font-size: .98rem; line-height: 1.55; max-width: 330px; }
 .start-lead b { color: #fff; }
 .start-facts { list-style: none; display: grid; gap: 8px; width: 100%; max-width: 330px; margin: 4px 0 8px; }
