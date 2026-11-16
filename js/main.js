@@ -1,8 +1,8 @@
 // The Smiling Influencer – schermen en de overgang tussen deel 1 en deel 2.
 // Verhoog ?v= bij elke nieuwe versie (overal hetzelfde nummer), zodat browsers geen oude bestanden mengen.
-import { startInfluencer, SPEED } from './influencer.js?v=14';
-import { showForest, setReplayHandler } from './forest.js?v=14';
-import { state, save } from './store.js?v=14';
+import { startInfluencer, SPEED } from './influencer.js?v=15';
+import { showForest, setReplayHandler } from './forest.js?v=15';
+import { state, save } from './store.js?v=15';
 
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, SPEED > 1 ? ms / 3 : ms));
