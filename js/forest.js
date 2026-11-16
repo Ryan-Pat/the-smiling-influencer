@@ -3,8 +3,8 @@
 import {
   state, save, currentPeriod, newPeriod, periodEnd, periodLabel, periodWord, fmtRange, fmtDate,
   putPhoto, allPhotos, deletePhoto, clearAll, processImage, uid,
-} from './store.js?v=13';
-import { openCamera, cameraErrorText } from './camera.js?v=13';
+} from './store.js?v=14';
+import { openCamera, cameraErrorText } from './camera.js?v=14';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
